@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Spożywka</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #252525;
+      --border: #333;
+      --accent: #c9a84c;
+      --accent-dim: #8a7035;
+      --text: #f0f0f0;
+      --text-dim: #888;
+      --red: #c0392b;
+      --green: #27ae60;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    header span { font-size: 12px; color: var(--text-dim); }
+
+    .container { max-width: 600px; margin: 0 auto; padding: 20px 16px; }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 18px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s;
+    }
+    .btn:active { background: var(--accent-dim); }
+    .btn:disabled { background: var(--surface2); color: var(--text-dim); cursor: default; }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 14px;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .btn-red {
+      background: transparent;
+      border: 1px solid var(--red);
+      color: var(--red);
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .session-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .session-card .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .session-id { font-size: 11px; color: var(--text-dim); font-family: monospace; }
+    .session-date { font-size: 12px; color: var(--text-dim); }
+
+    .badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge-new { background: #1a2a1a; color: var(--green); border: 1px solid #27ae6055; }
+    .badge-analyzed { background: #2a2a0a; color: var(--accent); border: 1px solid var(--accent-dim); }
+
+    .photo-count {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .photo-count span { font-size: 13px; color: var(--text-dim); font-weight: 400; }
+
+    .thumb-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+    .thumb-row img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .session-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .session-actions a {
+      font-size: 12px;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid var(--accent-dim);
+      border-radius: 6px;
+    }
+
+    .upload-zone {
+      background: var(--surface);
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 32px 16px;
+      text-align: center;
+      margin: 16px 0;
+    }
+    .upload-zone p { color: var(--text-dim); font-size: 14px; margin-top: 8px; }
+
+    .progress-bar {
+      background: var(--surface2);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .progress-bar-fill {
+      background: var(--accent);
+      height: 100%;
+      width: 0;
+      transition: width 0.3s;
+    }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+    .empty { text-align: center; color: var(--text-dim); padding: 40px 0; font-size: 14px; }
+
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Spożywka</h1>
+  <span id="session-count"></span>
+</header>
+
+<div class="container">
+
+  <button class="btn" id="btn-new" onclick="createSession()">+ Nowy produkt</button>
+
+  <div id="upload-zone" class="upload-zone" style="display:none">
+    <label for="file-input" style="cursor:pointer">
+      <div style="font-size:40px">📷</div>
+      <div style="font-size:16px;font-weight:600;margin-top:8px;color:var(--text)">Dodaj zdjęcia</div>
+      <p>Kliknij lub zrób zdjęcie telefonem</p>
+    </label>
+    <input id="file-input" type="file" accept="image/*" multiple capture="environment"
+           style="display:none" onchange="uploadFiles(this.files)">
+    <div class="progress-bar" id="progress-bar" style="display:none">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+    <div id="upload-status" style="font-size:13px;color:var(--text-dim);margin-top:8px;"></div>
+  </div>
+
+  <hr class="divider">
+
+  <div id="sessions-list"></div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = "";
+let activeSid = null;
+
+function toast(msg, ms = 2500) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.style.display = "block";
+  setTimeout(() => el.style.display = "none", ms);
+}
+
+async function createSession() {
+  document.getElementById("btn-new").disabled = true;
+  const res = await fetch(`${API}/sessions`, { method: "POST" });
+  const s = await res.json();
+  activeSid = s.id;
+  document.getElementById("upload-zone").style.display = "block";
+  document.getElementById("btn-new").disabled = false;
+  document.getElementById("upload-zone").scrollIntoView({ behavior: "smooth" });
+  await loadSessions();
+}
+
+async function uploadFiles(files) {
+  if (!activeSid || !files.length) return;
+  const bar = document.getElementById("progress-bar");
+  const fill = document.getElementById("progress-fill");
+  const status = document.getElementById("upload-status");
+  bar.style.display = "block";
+  let done = 0;
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append("files", file);
+    await fetch(`${API}/sessions/${activeSid}/photos`, { method: "POST", body: fd });
+    done++;
+    fill.style.width = `${(done / files.length) * 100}%`;
+    status.textContent = `${done} / ${files.length} zdjęć wgranych`;
+  }
+  toast(`✓ ${done} zdjęć wgranych`);
+  document.getElementById("upload-zone").style.display = "none";
+  activeSid = null;
+  document.getElementById("file-input").value = "";
+  await loadSessions();
+}
+
+async function deleteSession(sid) {
+  if (!confirm("Usunąć sesję?")) return;
+  await fetch(`${API}/sessions/${sid}`, { method: "DELETE" });
+  await loadSessions();
+}
+
+async function loadSessions() {
+  const res = await fetch(`${API}/sessions`);
+  const sessions = await res.json();
+  const list = document.getElementById("sessions-list");
+  const count = document.getElementById("session-count");
+  count.textContent = sessions.length ? `${sessions.length} sesji` : "";
+
+  if (!sessions.length) {
+    list.innerHTML = '<div class="empty">Brak sesji — kliknij "Nowy produkt"</div>';
+    return;
+  }
+
+  list.innerHTML = sessions.map(s => {
+    const date = new Date(s.created_at + "Z").toLocaleString("pl-PL");
+    const badge = s.status === "analyzed"
+      ? '<span class="badge badge-analyzed">✓ Przeanalizowany</span>'
+      : '<span class="badge badge-new">Nowy</span>';
+    const thumbs = (s.photo_urls || []).slice(0, 6).map(u =>
+      `<img src="${u}" loading="lazy">`
+    ).join("");
+
+    return `
+    <div class="session-card">
+      <div class="top">
+        <div>
+          <div class="photo-count">${s.photo_count} <span>zdjęć</span></div>
+          <div class="session-date">${date}</div>
+          <div class="session-id">${s.id.slice(0, 18)}…</div>
+        </div>
+        ${badge}
+      </div>
+      ${thumbs ? `<div class="thumb-row">${thumbs}</div>` : ""}
+      <div class="session-actions">
+        ${s.status === "analyzed" ? `<a href="/sessions/${s.id}/label.pdf" target="_blank">📄 Etykieta PDF</a>` : ""}
+        <a href="#" onclick="addMorePhotos('${s.id}'); return false">+ Zdjęcia</a>
+        <button class="btn-red" onclick="deleteSession('${s.id}')">Usuń</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function addMorePhotos(sid) {
+  activeSid = sid;
+  document.getElementById("upload-zone").style.display = "block";
+  document.getElementById("upload-zone").scrollIntoView({ behavior: "smooth" });
+}
+
+loadSessions();
+setInterval(loadSessions, 30000);
+</script>
+</body>
+</html>
